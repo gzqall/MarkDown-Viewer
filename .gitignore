@@ -1,0 +1,32 @@
+# Python
+*.pyc
+__pycache__/
+*.pyo
+
+# 构建产物（PyInstaller / NSIS）
+build/
+dist/
+installer.exe
+MarkdownViewer-Setup.exe
+
+# Node 依赖（运行时不用，仅早期实验残留）
+node_modules/
+
+# 第三方前端库（由 download_libs.py 从 CDN 拉取，不入仓库）
+renderer/vendor/
+
+# 测试 / 基准产物
+.benchmarks/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Claude Code 工作目录
+.claude/
+
+# 用户配置（运行时生成，写到 %APPDATA%，但根目录残留的旧文件也忽略）
+.mdt_config.json
+
+# OS
+.DS_Store
+Thumbs.db

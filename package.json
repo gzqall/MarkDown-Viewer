@@ -1,0 +1,17 @@
+{
+  "name": "markdown-viewer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "node --test tests/js/*.test.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "iconv-lite": "^0.7.3",
+    "markdown-it": "^14.3.0"
+  }
+}

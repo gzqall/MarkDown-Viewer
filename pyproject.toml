@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "markdown-viewer"
+version = "1.1.0"
+description = "Markdown Viewer — PyQt6 desktop application"
+requires-python = ">=3.10"
+dependencies = [
+    "PyQt6>=6.7.0",
+    "PyQt6-WebEngine>=6.7.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-qt>=4.4",
+    "pytest-benchmark>=4.0",
+    "coverage>=7.4",
+]
+
+# ─── pytest 配置 ─────────────────────────────────────────────────────────
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+# pytest-qt: 指定 PyQt6 作为 Qt 绑定
+qt_api = "pyqt6"
+addopts = [
+    "-ra",
+    "--strict-markers",
+    "--strict-config",
+]
+markers = [
+    "smoke: end-to-end smoke tests that may start a real Qt event loop",
+    "bench: benchmarks (selected by --benchmark)",
+]
+
+[tool.coverage.run]
+source = ["."]
+omit = [
+    "tests/*",
+    "build.py",
+    "generate_icon.py",
+    "convert_logo_to_ico.py",
+    "download_libs.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+]

@@ -1,0 +1,5 @@
+# 测试与开发依赖（requirements.txt 是运行期依赖，这里只放开发期）
+pytest>=8.0
+pytest-qt>=4.4
+pytest-benchmark>=4.0
+coverage>=7.4
