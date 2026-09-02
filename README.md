@@ -106,7 +106,8 @@ pytest --benchmark           # 性能基准
 
 本项目自身代码基于 **MIT License** 发布，见 [LICENSE.txt](LICENSE.txt)。
 
-本项目分发以下第三方库，其版权归各自所有者：
+本项目分发以下第三方库，其版权归各自所有者所有，许可证清单详见
+[THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md)：
 
 | 库 | 许可证 |
 |---|---|
@@ -115,9 +116,11 @@ pytest --benchmark           # 性能基准
 | Mermaid | MIT |
 | ECharts | Apache-2.0 |
 | KaTeX | MIT |
+| qwebchannel.js (Qt WebChannel) | LGPL-3.0 |
 | PyQt6 / PyQt6-WebEngine | GPL v3（商用需另购 Riverbank 授权）|
 
-各库的完整版权声明随其源码分发。
+各第三方库的完整许可证文本由 `download_libs.py` 拉取到 `renderer/vendor/LICENSES/`，
+随安装包分发，满足 MIT/BSD/Apache/LGPL 的"保留版权声明"要求。
 
 ## 👤 作者
 
