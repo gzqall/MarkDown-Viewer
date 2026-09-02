@@ -3,7 +3,7 @@
 一款基于 PyQt6 + WebEngine 的 Windows 桌面 Markdown 查看器。支持多页签、实时预览、语法高亮、Mermaid / ECharts 图表、KaTeX 数学公式、文件树、目录拖放、导出 PDF / HTML，以及 `.md` 文件关联。深色 / 浅色双主题。
 
 > 适用场景：本地浏览 Markdown 文档，告别"用编辑器看排版"的不便。
-![Uploading PixPin_2026-09-02_14-17-16.png…]()
+![Markdown Viewer 软件界面](screenshot.png)
 
 
 ## ✨ 功能特性
