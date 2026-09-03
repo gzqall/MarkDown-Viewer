@@ -153,10 +153,10 @@ kbd {
 }
 .tool-btn.small:hover { background: var(--bg-hover); color: var(--text-primary); }
 
-/* ─── TOC Sidebar (injected by Python) ─────────────────────────────────── */
+/* ─── TOC Sidebar (左侧目录) ──────────────────────────────────────────── */
 .toc-sidebar {
-  width: 220px; background: var(--bg-secondary);
-  border-left: 1px solid var(--border);
+  width: 240px; background: var(--bg-secondary);
+  border-right: 1px solid var(--border);
   display: flex; flex-direction: column; flex-shrink: 0; overflow: hidden;
 }
 .toc-header {
@@ -170,9 +170,14 @@ kbd {
   color: var(--text-secondary); text-decoration: none; cursor: pointer;
   transition: color 0.12s, background 0.12s;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  border-left: 2px solid transparent;
 }
 .toc-item:hover { color: var(--accent); background: var(--accent-bg); }
-.toc-item.active { color: var(--accent); font-weight: 500; }
+.toc-item.active {
+  color: var(--accent); font-weight: 500;
+  background: var(--accent-bg);
+  border-left-color: var(--accent);
+}
 
 /* ═══════════════════════════════════════════════════════════════════════════
    MARKDOWN CONTENT STYLES

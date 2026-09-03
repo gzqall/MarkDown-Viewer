@@ -242,6 +242,12 @@ function renderContent(markdown) {
           if (state.currentPath && state.files[state.currentPath]) {
             dom.content.scrollTop = state.files[state.currentPath].scrollPos || 0;
           }
+          // 在 postProcessContent 给标题赋完 id 后，重建左侧目录并刷新高亮。
+          // 之前 buildTOC 在 renderContent 之前跑，拿到的 h.id 多为空，点击/跳转失效。
+          if (dom.tocSidebar.style.display !== 'none') {
+            buildTOC();
+            updateActiveTOCItem();
+          }
         } finally {
           hideLoading();
         }
@@ -351,12 +357,20 @@ function buildTOC() {
     link.style.paddingLeft = `${12 + (level - 1) * 16}px`;
     link.textContent = text;
     link.href = '#';
+    link.setAttribute('data-href', '#' + (id || ''));
     link.addEventListener('click', (e) => {
       e.preventDefault();
       if (id) {
-        document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        container.querySelectorAll('.toc-item').forEach((t) => t.classList.remove('active'));
-        link.classList.add('active');
+        // 滚动到对应标题；保留一个偏移让标题不至于贴在最顶端
+        const target = document.getElementById(id);
+        if (target) {
+          dom.content.scrollTo({
+            top: Math.max(0, target.offsetTop - 12),
+            behavior: 'smooth',
+          });
+          container.querySelectorAll('.toc-item').forEach((t) => t.classList.remove('active'));
+          link.classList.add('active');
+        }
       }
     });
     container.appendChild(link);
@@ -377,6 +391,11 @@ function toggleSearch() {
 
 function performSearch() {
   const query = dom.searchInput.value.trim().toLowerCase();
+  // 相同查询不重复扫描（防止 input 防抖重复跑、且回车跳转时无需重算）
+  if (query === state._lastSearchQuery) {
+    return;
+  }
+  state._lastSearchQuery = query;
   clearSearchHighlights();
   state.searchResults = [];
   state.searchIndex = -1;
@@ -453,6 +472,29 @@ function clearSearchHighlights() {
   state.searchResults = [];
   state.searchIndex = -1;
   dom.searchCount.textContent = '';
+}
+
+// ─── Search wiring (input + 按钮) ────────────────────────────────────────
+// 之前 performSearch 定义了却从未被调用：input 不搜、回车/按钮都失效。
+// 这里把 input 事件（带防抖）和 上一个/下一个/关闭 三个按钮接上。
+function setupSearch() {
+  let t = null;
+  dom.searchInput.addEventListener('input', () => {
+    clearTimeout(t);
+    t = setTimeout(performSearch, 100);
+  });
+  $('#btn-search-prev')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    goToSearchResult(state.searchIndex - 1);
+  });
+  $('#btn-search-next')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    goToSearchResult(state.searchIndex + 1);
+  });
+  $('#btn-search-close')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    toggleSearch();
+  });
 }
 
 // ─── Zoom ─────────────────────────────────────────────────────────────────
@@ -641,7 +683,59 @@ function toggleTOC() {
   const sidebar = dom.tocSidebar;
   const isHidden = sidebar.style.display === 'none';
   sidebar.style.display = isHidden ? 'block' : 'none';
-  if (isHidden) buildTOC();
+  if (isHidden) {
+    buildTOC();
+    updateActiveTOCItem();  // 立即高亮当前章节
+  }
+}
+
+// ─── TOC Scroll-Spy ───────────────────────────────────────────────────────
+// 监听内容滚动，自动高亮左侧目录中当前可见章节，便于快速跳转浏览。
+let _tocSpyReady = false;
+function setupTOCScrollSpy() {
+  if (_tocSpyReady) return;
+  _tocSpyReady = true;
+  // 滚动节流：rAF 合并连续滚动事件
+  let ticking = false;
+  dom.content?.addEventListener('scroll', () => {
+    if (!ticking) {
+      ticking = true;
+      requestAnimationFrame(() => { updateActiveTOCItem(); ticking = false; });
+    }
+  }, { passive: true });
+}
+
+function updateActiveTOCItem() {
+  if (dom.tocSidebar.style.display === 'none') return;
+  const headings = Array.from(dom.preview.querySelectorAll('h1, h2, h3, h4, h5, h6'));
+  if (!headings.length) return;
+
+  // 找到当前滚动视口顶部之上（留 80px 缓冲）最后一个已滚过的标题
+  const scrollY = dom.content.scrollTop;
+  const threshold = 80;
+  let active = null;
+  for (const h of headings) {
+    // offsetTop 相对 offsetParent；content 是滚动容器
+    if (h.offsetTop - threshold <= scrollY) active = h;
+    else break;
+  }
+  // 没滚到任何标题（页面顶端）→ 高亮第一个
+  if (!active) active = headings[0];
+  const activeId = active.id;
+
+  dom.tocContent.querySelectorAll('.toc-item').forEach((item) => {
+    item.classList.toggle('active', item.getAttribute('data-href') === '#' + activeId);
+  });
+
+  // 把当前 active 项滚进目录侧栏可见区域
+  const activeEl = dom.tocContent.querySelector('.toc-item.active');
+  if (activeEl) {
+    const cRect = dom.tocContent.getBoundingClientRect();
+    const eRect = activeEl.getBoundingClientRect();
+    if (eRect.top < cRect.top || eRect.bottom > cRect.bottom) {
+      activeEl.scrollIntoView({ block: 'nearest' });
+    }
+  }
 }
 
 // ─── Theme ────────────────────────────────────────────────────────────────
@@ -699,13 +793,8 @@ window._openFile = function (info) {
   // Hide drop overlay
   dom.dropOverlay.classList.add('hidden');
 
-  // Render
+  // Render (TOC 会在 postProcessContent 赋完标题 id 后，于 renderContent 内重建)
   renderContent(data.content);
-
-  // Build TOC if sidebar visible
-  if (dom.tocSidebar.style.display !== 'none') {
-    buildTOC();
-  }
 };
 
 /** Restore scroll position after render (called from Python via runJS) */
@@ -766,6 +855,11 @@ document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') { toggleSearch(); return; }
     if (e.key === 'Enter') {
       e.preventDefault();
+      // 回车前先确保当前输入已被搜索（防抖可能还没跑）
+      const q = dom.searchInput.value.trim().toLowerCase();
+      if (q !== state._lastSearchQuery) {
+        performSearch();
+      }
       if (e.shiftKey) goToSearchResult(state.searchIndex - 1);
       else goToSearchResult(state.searchIndex + 1);
       return;
@@ -1005,6 +1099,12 @@ async function init() {
 
   // Set up wiki link navigation
   setupWikiLinks();
+
+  // Set up search bar (input debounce + prev/next/close buttons)
+  setupSearch();
+
+  // Set up TOC scroll-spy (highlight current heading in sidebar)
+  setupTOCScrollSpy();
 }
 
 // Start when DOM is ready
